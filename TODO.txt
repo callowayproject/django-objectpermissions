@@ -1,0 +1,19 @@
+Test Decorators for views
+documentation
+blog entry
+
+
+get all groups with given permission set for an object
+	Any permission: object.group_perms_set.all().extra(where=['permission | %s > 0',], params=[perm1+perm2])
+	All permissions: object.group_perms_set.all().extra(where=['permission | %s == %s',], params=[perm1+perm2,perm1+perm2])
+	Only permissions: object.group_perms_set.filter(permission=perm1+perm2)
+
+get all users with given permission set permission for an object
+	Any permission: object.user_perms_set.all().extra(where=['permission | %s > 0',], params=[perm1+perm2])
+	All permissions: object.user_perms_set.all().extra(where=['permission | %s == %s',], params=[perm1+perm2,perm1+perm2])
+	Only permissions: object.user_perms_set.filter(permission=perm1+perm2)
+
+Have a way to set default permissions for a user and/or group when an object is created.
+	Probably will have to be a listener to post_save
+	Write a set of default listeners that can be employed
+
