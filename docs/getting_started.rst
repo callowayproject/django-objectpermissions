@@ -4,7 +4,16 @@ Getting Started
 
 
 Install it
+
 Add it to INSTALLED_APPS
+
+Tutorial for setting up a model/admin/view:
+	Existing or 3rd-party app
+	Ground up
+
+permissions in python
+
+reference
 
 Registering Permissions for a Model
 ===================================
@@ -78,7 +87,7 @@ Permissions can be referenced by name::
 
     'perm1'
 
-Permissions can be referenced by a list of names or ``int``s::
+Permissions can be referenced by a list of names or ``int``\ s::
 
     ['perm1', 'perm2']
     [obj.perms.perm1, objs.perms.perm2]

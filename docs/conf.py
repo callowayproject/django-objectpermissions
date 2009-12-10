@@ -38,8 +38,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'objectpermissions'
-copyright = u'2009, me'
+project = u'Django Object Permissions'
+copyright = u'2009, The Washington Times'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
