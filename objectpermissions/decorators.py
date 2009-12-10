@@ -13,7 +13,7 @@ from django.utils.http import urlquote
 
 from views import permission_denied
 
-def permission_required(object, permission, obj_lookup, login_url=settings.LOGIN_URL, 
+def permission_required(permission, obj_lookup, login_url=settings.LOGIN_URL, 
                         redirect_field_name=REDIRECT_FIELD_NAME, **kwargs):
     """
     Decorator for a view that makes sure that the user has *all* permissions,

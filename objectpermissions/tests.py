@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.test.client import Client
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
@@ -130,5 +131,5 @@ class TestRegistration(TestCase):
         
         g.revoke_object_perm(fp, fp.perms.Perm1)
         self.assertEquals(u.get_object_perm(fp), fp.perms.Perm3+fp.perms.Perm4)
-        
-        
+    
+    
