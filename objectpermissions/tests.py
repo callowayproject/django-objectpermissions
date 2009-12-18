@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 
 import objectpermissions
 from models import ModelPermissions, UserPermission, GroupPermission
+from simpleapp.models import SimpleText, SimpleTaggedItem
 
 class TestModelPermissions(TestCase):
     perms = ['Perm1', 'Perm2', 'Perm3', 'Perm4']
@@ -45,6 +46,7 @@ class TestModelPermissions(TestCase):
 class TestRegistration(TestCase):
     perms = ['Perm1', 'Perm2', 'Perm3', 'Perm4']
     values = [1,2,4,8]
+    fixtures = ['simpleapp.json', ]
     
     def setUp(self):
         self.fp = FlatPage.objects.create(url='dummy/', title="dummy", enable_comments=False, registration_required=False)
@@ -57,6 +59,13 @@ class TestRegistration(TestCase):
         self.u = User.objects.create_user('simple_guy','simple@guy.com', 'password')
         self.g = Group(name="simple_group")
         self.g.save()
+    
+    def create_simpletext(self):
+        self.st = SimpleText.objects.create(lastname="Daniels",
+                                            favorite_color="Red",
+                                            firstname="Charlie")
+        self.st.simpletaggeditem_set.create(tag="country")
+        self.st.simpletaggeditem_set.create(tag="singer")
         
     def testRegiser(self):
         self.assertTrue(hasattr(FlatPage, 'user_perms_set'))
@@ -133,30 +142,40 @@ class TestRegistration(TestCase):
         self.assertEquals(u.get_object_perm(fp), fp.perms.Perm3+fp.perms.Perm4)
     
     def testSignals(self):
-        fp = self.fp
+        self.create_simpletext()
+        st = self.st
         u = self.u
         g = self.g
         g.user_set.add(u)
         
-        # Clean the slate
-        u.revoke_all_object_perm(fp)
-        g.revoke_all_object_perm(fp)
-        self.assertEquals(u.get_object_perm(fp), 0)
-        self.assertEquals(g.get_object_perm(fp), 0)
-        
-        def my_user_handler(sender, **kwargs):
+        def my_user_handler(sender, to_whom, to_what, **kwargs):
             self.assertTrue(isinstance(sender, UserPermission))
-            self.assertEquals(kwargs['content_obj'], fp)
+            if isinstance(to_what, SimpleText):
+                stis = st.simpletaggeditem_set.all()
+                for item in stis:
+                    to_whom.set_object_perm(item, sender.permission)
+            else:
+                self.assertTrue(isinstance(to_what, SimpleTaggedItem))
         
-        def my_group_handler(sender, **kwargs):
+        def my_group_handler(sender, to_whom, to_what, **kwargs):
             self.assertTrue(isinstance(sender, GroupPermission))
-            self.assertEquals(kwargs['content_obj'], fp)
+            if isinstance(to_what, SimpleText):
+                stis = st.simpletaggeditem_set.all()
+                for item in stis:
+                    to_whom.set_object_perm(item, sender.permission)
+            else:
+                self.assertTrue(isinstance(to_what, SimpleTaggedItem))
         
         from signals import permission_changed
         permission_changed.connect(my_user_handler)
         
-        u.grant_object_perm(fp, fp.perms.Perm1)
+        u.grant_object_perm(st, st.perms.perm1)
+        for item in st.simpletaggeditem_set.all():
+            self.assertEquals(u.get_object_perm(item), u.get_object_perm(st))
         permission_changed.disconnect(my_user_handler)
         permission_changed.connect(my_group_handler)
+        g.grant_object_perm(st, st.perms.perm2)
+        for item in st.simpletaggeditem_set.all():
+            self.assertEquals(u.get_object_perm(item), u.get_object_perm(st))
         
-        g.grant_object_perm(fp, fp.perms.Perm2)
+        

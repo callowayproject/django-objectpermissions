@@ -14,9 +14,7 @@ class SimpleText(models.Model):
 
 class SimpleTaggedItem(models.Model):
     tag = models.SlugField()
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    simple_text = models.ForeignKey(SimpleText)
 
     def __unicode__(self):
         return self.tag
@@ -24,12 +22,16 @@ class SimpleTaggedItem(models.Model):
 import objectpermissions
 permissions = ['perm1', 'perm2', 'perm3', 'perm4']
 objectpermissions.register(SimpleText, permissions)
+objectpermissions.register(SimpleTaggedItem, permissions)
 
 from django.contrib import admin
 from objectpermissions.admin import TabularUserPermInline, StackedUserPermInline
 
+class SimpleTaggedItemInline(admin.TabularInline):
+    model = SimpleTaggedItem
+
 class SimpleTextAdmin(admin.ModelAdmin):
     list_display = ('firstname','lastname','favorite_color')
-    inlines = [TabularUserPermInline, ]
+    inlines = [SimpleTaggedItemInline, TabularUserPermInline, ]
 
 admin.site.register(SimpleText, SimpleTextAdmin)

@@ -105,6 +105,33 @@ def revoke_all_object_permissions(self, instance):
         return 
     
 
+def set_object_permission(self, instance, perm):
+    """
+    Sets the permission to the ``perm`` value. Same as revoking all privileges
+    and granting ``perm``
+    
+    :param instance: The object on which to set the permissions
+    :type instance:  ``Model``
+    :param perm:  The permission(s) that should be set.
+    :type perm:   ``int``, ``string`` or ``list of string``
+    """
+    perms = instance.perms.as_int(perm)
+    if isinstance(self, User):
+        try:
+            the_permission = instance.user_perms_set.get(user=self)
+        except UserPermission.DoesNotExist:
+            the_permission = instance.user_perms_set.create(user=self)
+    elif isinstance(self, Group):
+        try:
+            the_permission = instance.group_perms_set.get(group=self)
+        except GroupPermission.DoesNotExist:
+            the_permission = instance.group_perms_set.create(group=self)
+    else:
+        raise Exception("This method should only be attached to a User or Group object.")
+    the_permission.permission = perms
+    the_permission.save()
+
+
 def user_has_object_permission(self, instance, perm, require_all=False):
     """
     Basic testing of user permissions. Permissions can be passed as an int, using the 
@@ -315,6 +342,7 @@ def group_get_objects_with_permission(self, model, permission):
 if User not in registry:
     registry.append(User)
     setattr(User, 'grant_object_perm', grant_object_permission)
+    setattr(User, 'set_object_perm', set_object_permission)
     setattr(User, 'revoke_object_perm', revoke_object_permission)
     setattr(User, 'revoke_all_object_perm', revoke_all_object_permissions)
     setattr(User, 'has_object_perm', user_has_object_permission)
@@ -328,6 +356,7 @@ if User not in registry:
 if Group not in registry:
     registry.append(Group)
     setattr(Group, 'grant_object_perm', grant_object_permission)
+    setattr(Group, 'set_object_perm', set_object_permission)
     setattr(Group, 'revoke_object_perm', revoke_object_permission)
     setattr(Group, 'revoke_all_object_perm', revoke_all_object_permissions)
     setattr(Group, 'has_object_perm', group_has_object_permission)
