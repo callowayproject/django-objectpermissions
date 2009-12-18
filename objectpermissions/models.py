@@ -3,7 +3,11 @@ from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 
-from registration import UnknownPermission
+class UnknownPermission(Exception):
+    """
+    An attempt was made to query for a permission that was not registered for that model.
+    """
+    pass
 
 class Permission(models.Model):
     """
@@ -16,6 +20,14 @@ class Permission(models.Model):
     
     class Meta:
         abstract = True
+    
+    def save(self, force_insert=False, force_update=False):
+        """
+        Send out a signal indicating that a permission was changed
+        """
+        super(Permission, self).save(force_insert, force_update)
+        from signals import permission_changed
+        permission_changed.send(sender=self, content_obj=self.content_object)
     
     @classmethod
     def bits(self, a):

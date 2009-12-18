@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 # Test against flat pages
 
 import objectpermissions
-from models import ModelPermissions, UserPermission
+from models import ModelPermissions, UserPermission, GroupPermission
 
 class TestModelPermissions(TestCase):
     perms = ['Perm1', 'Perm2', 'Perm3', 'Perm4']
@@ -132,4 +132,31 @@ class TestRegistration(TestCase):
         g.revoke_object_perm(fp, fp.perms.Perm1)
         self.assertEquals(u.get_object_perm(fp), fp.perms.Perm3+fp.perms.Perm4)
     
-    
+    def testSignals(self):
+        fp = self.fp
+        u = self.u
+        g = self.g
+        g.user_set.add(u)
+        
+        # Clean the slate
+        u.revoke_all_object_perm(fp)
+        g.revoke_all_object_perm(fp)
+        self.assertEquals(u.get_object_perm(fp), 0)
+        self.assertEquals(g.get_object_perm(fp), 0)
+        
+        def my_user_handler(sender, **kwargs):
+            self.assertTrue(isinstance(sender, UserPermission))
+            self.assertEquals(kwargs['content_obj'], fp)
+        
+        def my_group_handler(sender, **kwargs):
+            self.assertTrue(isinstance(sender, GroupPermission))
+            self.assertEquals(kwargs['content_obj'], fp)
+        
+        from signals import permission_changed
+        permission_changed.connect(my_user_handler)
+        
+        u.grant_object_perm(fp, fp.perms.Perm1)
+        permission_changed.disconnect(my_user_handler)
+        permission_changed.connect(my_group_handler)
+        
+        g.grant_object_perm(fp, fp.perms.Perm2)

@@ -10,13 +10,6 @@ class AlreadyRegistered(Exception):
     """
     pass
 
-class UnknownPermission(Exception):
-    """
-    An attempt was made to query for a permission that was not registered for that model.
-    """
-    pass
-
-
 #: Contains all the models that we've registered. A ``list`` of ``Model``\ s
 registry = []
 
