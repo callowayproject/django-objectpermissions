@@ -24,6 +24,7 @@ Contents:
    :glob:
    
    getting_started
+   signals
 
 Indices and tables
 ==================
