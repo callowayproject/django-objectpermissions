@@ -151,7 +151,7 @@ class TestRegistration(TestCase):
         def my_user_handler(sender, to_whom, to_what, **kwargs):
             self.assertTrue(isinstance(sender, UserPermission))
             if isinstance(to_what, SimpleText):
-                stis = st.simpletaggeditem_set.all()
+                stis = to_what.simpletaggeditem_set.all()
                 for item in stis:
                     to_whom.set_object_perm(item, sender.permission)
             else:
@@ -160,7 +160,7 @@ class TestRegistration(TestCase):
         def my_group_handler(sender, to_whom, to_what, **kwargs):
             self.assertTrue(isinstance(sender, GroupPermission))
             if isinstance(to_what, SimpleText):
-                stis = st.simpletaggeditem_set.all()
+                stis = to_what.simpletaggeditem_set.all()
                 for item in stis:
                     to_whom.set_object_perm(item, sender.permission)
             else:
