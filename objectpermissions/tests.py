@@ -141,6 +141,25 @@ class TestRegistration(TestCase):
         g.revoke_object_perm(fp, fp.perms.Perm1)
         self.assertEquals(u.get_object_perm(fp), fp.perms.Perm3+fp.perms.Perm4)
     
+    def testGetObjectsWithPermission(self):
+        fp = self.fp
+        u = self.u
+        g = self.g
+        
+        # Clean the slate
+        u.revoke_all_object_perm(fp)
+        g.revoke_all_object_perm(fp)
+        self.assertEquals(u.get_object_perm(fp), 0)
+        self.assertEquals(g.get_object_perm(fp), 0)
+        
+        g.grant_object_perm(fp, fp.perms.Perm1 + fp.perms.Perm4)
+        objs = u.get_objects_with_perms(FlatPage, fp.perms.Perm4)
+        self.assertEquals(len(objs), 0)
+        
+        g.user_set.add(u)
+        objs = u.get_objects_with_perms(FlatPage, fp.perms.Perm1)
+        self.assertEquals(fp, objs[0])
+    
     def testSignals(self):
         self.create_simpletext()
         st = self.st

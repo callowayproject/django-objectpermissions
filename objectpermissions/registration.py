@@ -38,14 +38,20 @@ def register(model, permissions):
 
 # The following functions are added to the User/Group objects
 
-def grant_object_permission(self, instance, perm):
+def grant_object_perm(self, instance, perm):
     """
-    Allows the User or Group the passed permission to the object instance
+    Grants permission ``perm`` to object ``instance`` for the :class:`User` or 
+    :class:`Group` ``self``\ .
     
-    :param instance: A specific :class:`User` or :class:`Group`
-    :type instance: :class:`User` or :class:`Group`
-    :param perm: The integer referring to the model's permissions
-    :type perm: ``integer``
+    This function is added to the :class:`User` and :class:`Group` models and 
+    is called as::
+    
+        a_user.grant_object_perm(an_object_instance, 'read')
+    
+    :param instance: A Django :class:`Model` instance
+    :type instance: :class:`Model`
+    :param perm: The permission(s) to grant
+    :type perm: ``integer``, ``string``, ``list of string``
     """
     addl_perm = instance.perms.as_int(perm)
     query_args = {}
@@ -65,14 +71,15 @@ def grant_object_permission(self, instance, perm):
     the_permission.save()
 
 
-def revoke_object_permission(self, instance, perm):
+def revoke_object_perm(self, instance, perm):
     """
-    Remove the permission for the User or Group for this object instance.
+    Remove the permission ``perm`` to object ``instance`` for the :class:`User` or 
+    :class:`Group` ``self``\ .
     
-    :param instance: A specific :class:`User` or :class:`Group`
-    :type instance: :class:`User` or :class:`Group`
+    :param instance: A Django :class:`Model` instance
+    :type instance: :class:`Model`
     :param perm: The name of the permission to revoke
-    :type perm: ``string``
+    :type perm: ``integer``, ``string``, ``list of string``
     """
     remove_perm = instance.perms.as_int(perm)
     
@@ -91,9 +98,12 @@ def revoke_object_permission(self, instance, perm):
         the_permission.save()
 
 
-def revoke_all_object_permissions(self, instance):
+def revoke_all_object_perm(self, instance):
     """
-    Remove all the permissions for this User or Group
+    Remove all the permissions for this :class:`User` or :class:`Group`\ .
+    
+    :param instance: A Django :class:`Model` instance
+    :type instance: :class:`Model`
     """
     try:
         if isinstance(self, User):
@@ -105,7 +115,7 @@ def revoke_all_object_permissions(self, instance):
         return 
     
 
-def set_object_permission(self, instance, perm):
+def set_object_perm(self, instance, perm):
     """
     Sets the permission to the ``perm`` value. Same as revoking all privileges
     and granting ``perm``
@@ -132,7 +142,7 @@ def set_object_permission(self, instance, perm):
     the_permission.save()
 
 
-def user_has_object_permission(self, instance, perm, require_all=False):
+def user_has_object_perm(self, instance, perm, require_all=False):
     """
     Basic testing of user permissions. Permissions can be passed as an int, using the 
     object's ``perms`` attribute::
@@ -188,12 +198,27 @@ def user_has_object_permission(self, instance, perm, require_all=False):
     return False
 
 
-def user_has_all_object_permissions(self, instance, perm):
+def user_has_all_object_perm(self, instance, perm):
     return self.has_object_perm(instance, perm, True)
 
 def user_get_object_permissions(self, instance, format='int'):
     """
-    Get the user's permissions for this object, formatted in a specific way
+    Get the user's permissions for this object, formatted in a specific way.
+    
+    Format options:
+    
+    int: One integer with all permissions
+    
+    string_list: A list of the permission names
+    
+    int_list: A list of the permission values
+    
+    choices: A list of integer, string tuples for choice lists
+    
+    :param instance: A django :class:`Model` instance
+    :type instance: :class:`Model`
+    :param format: 'int', 'string_list', 'int_list', 'choices'. **Default:** 'int'
+    :type format: ``string``
     """
     try:
         user_perm = instance.user_perms_set.get(user=self)
@@ -240,9 +265,14 @@ def user_get_objects_with_permission(self, model, permission):
     """
     ctype = ContentType.objects.get_for_model(model)
     perms = model.perms.as_int(permission)
-    obj_ids = self.userpermission_set.filter(content_type=ctype).extra(
-                where=['permission | %s == %s',], params=[perms,perms,]
-                ).values_list('object_id', flat=True)
+    obj_ids = list(self.userpermission_set.filter(content_type=ctype).extra(
+                where=['permission | %s > 0',], params=[perms,]
+                ).values_list('object_id', flat=True))
+    for group in self.groups.all():
+        group_ids = list(GroupPermission.objects.filter(content_type=ctype).extra(
+                    where=['permission | %s > 0',], params=[perms,]
+                    ).values_list('object_id', flat=True))
+        obj_ids.extend(group_ids)
     return model.objects.filter(pk__in=obj_ids)
 
 
@@ -333,7 +363,7 @@ def group_get_objects_with_permission(self, model, permission):
     ctype = ContentType.objects.get_for_model(model)
     perms = model.perms.as_int(permission)
     obj_ids = self.grouppermission_set.filter(content_type=ctype).extra(
-                where=['permission | %s == %s',], params=[perms,perms,]
+                where=['permission | %s > 0',], params=[perms,]
                 ).values_list('object_id', flat=True)
     return model.objects.filter(pk__in=obj_ids)
 
@@ -341,13 +371,13 @@ def group_get_objects_with_permission(self, model, permission):
 
 if User not in registry:
     registry.append(User)
-    setattr(User, 'grant_object_perm', grant_object_permission)
-    setattr(User, 'set_object_perm', set_object_permission)
-    setattr(User, 'revoke_object_perm', revoke_object_permission)
-    setattr(User, 'revoke_all_object_perm', revoke_all_object_permissions)
-    setattr(User, 'has_object_perm', user_has_object_permission)
-    setattr(User, 'has_any_object_perm', user_has_object_permission)
-    setattr(User, 'has_all_object_perm', user_has_all_object_permissions)
+    setattr(User, 'grant_object_perm', grant_object_perm)
+    setattr(User, 'set_object_perm', set_object_perm)
+    setattr(User, 'revoke_object_perm', revoke_object_perm)
+    setattr(User, 'revoke_all_object_perm', revoke_all_object_perm)
+    setattr(User, 'has_object_perm', user_has_object_perm)
+    setattr(User, 'has_any_object_perm', user_has_object_perm)
+    setattr(User, 'has_all_object_perm', user_has_all_object_perm)
     setattr(User, 'get_object_perm', user_get_object_permissions)
     setattr(User, 'get_object_perm_as_str_list', user_get_object_permissions_as_string_list)
     setattr(User, 'get_object_perm_as_int_list', user_get_object_permissions_as_int_list)
@@ -355,10 +385,10 @@ if User not in registry:
     setattr(User, 'get_objects_with_perms', user_get_objects_with_permission)
 if Group not in registry:
     registry.append(Group)
-    setattr(Group, 'grant_object_perm', grant_object_permission)
-    setattr(Group, 'set_object_perm', set_object_permission)
-    setattr(Group, 'revoke_object_perm', revoke_object_permission)
-    setattr(Group, 'revoke_all_object_perm', revoke_all_object_permissions)
+    setattr(Group, 'grant_object_perm', grant_object_perm)
+    setattr(Group, 'set_object_perm', set_object_perm)
+    setattr(Group, 'revoke_object_perm', revoke_object_perm)
+    setattr(Group, 'revoke_all_object_perm', revoke_all_object_perm)
     setattr(Group, 'has_object_perm', group_has_object_permission)
     setattr(Group, 'has_any_object_perm', group_has_object_permission)
     setattr(Group, 'has_all_object_perm', group_has_all_object_permissions)
