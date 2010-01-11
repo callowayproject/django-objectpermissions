@@ -25,6 +25,7 @@ Contents:
    
    getting_started
    signals
+   reference/index
 
 Indices and tables
 ==================
