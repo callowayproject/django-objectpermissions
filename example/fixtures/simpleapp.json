@@ -1,0 +1,43 @@
+[
+    {
+        "pk": 1,
+         "model": "simpleapp.simpletext",
+         "fields": 
+        {
+            "lastname": "Daniels",
+             "favorite_color": "Red",
+             "firstname": "Charlie"
+        }
+    },
+     
+    {
+        "pk": 1,
+         "model": "simpleapp.simpletaggeditem",
+         "fields": 
+        {
+            "tag": "country",
+             "simple_text": 1
+        }
+    },
+     
+    {
+        "pk": 2,
+         "model": "simpleapp.simpletaggeditem",
+         "fields": 
+        {
+            "tag": "singer",
+             "simple_text": 1
+        }
+    },
+     
+    {
+        "pk": 3,
+         "model": "simpleapp.simpletaggeditem",
+         "fields": 
+        {
+            "tag": "fiddle",
+             "simple_text": 1
+        }
+    }
+]
+
