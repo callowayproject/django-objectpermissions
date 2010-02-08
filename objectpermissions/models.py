@@ -9,6 +9,18 @@ class UnknownPermission(Exception):
     """
     pass
 
+
+class PermissionManager(models.Manager):
+    def all_with_perm(self, permission):
+        """
+        Return all users that have the permission ``permission`` for this object.
+        """
+        perm = self.instance.perms.as_int(permission)
+        qs = self.get_query_set()
+        new_qs = qs.extra(where=['permission & %s = %s',], params=[perm, perm])
+        return new_qs
+
+
 class Permission(models.Model):
     """
     A privilege granted to a specific User or Group to a specific object.
@@ -21,6 +33,7 @@ class Permission(models.Model):
     class Meta:
         abstract = True
     
+    objects = PermissionManager()
     
     @classmethod
     def bits(self, a):
@@ -85,11 +98,11 @@ class Permission(models.Model):
 class UserPermission(Permission):
     user = models.ForeignKey(User)
     
-    def save(self, force_insert=False, force_update=False):
+    def save(self, force_insert=False, force_update=False, using=None):
         """
         Send out a signal indicating that a permission was changed
         """
-        super(Permission, self).save(force_insert, force_update)
+        super(Permission, self).save(force_insert, force_update, using)
         from signals import permission_changed
         permission_changed.send(sender=self, to_whom=self.user, to_what=self.content_object)
 
@@ -97,11 +110,11 @@ class UserPermission(Permission):
 class GroupPermission(Permission):
     group = models.ForeignKey(Group, null=True)
     
-    def save(self, force_insert=False, force_update=False):
+    def save(self, force_insert=False, force_update=False, using=None):
         """
         Send out a signal indicating that a permission was changed
         """
-        super(Permission, self).save(force_insert, force_update)
+        super(Permission, self).save(force_insert, force_update, using)
         from signals import permission_changed
         permission_changed.send(sender=self, to_whom=self.group, to_what=self.content_object)
 
