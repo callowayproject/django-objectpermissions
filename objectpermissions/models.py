@@ -51,7 +51,7 @@ class Permission(models.Model):
         result = []
         oct_bits={'0':[0,0,0],'1':[0,0,1],'2':[0,1,0],'3':[0,1,1],
            '4':[1,0,0],'5':[1,0,1],'6':[1,1,0],'7':[1,1,1]}
-        for c in oct(a)[1:]:
+        for c in oct(int(a))[1:]:
                 result += oct_bits[c]
         return result
     
