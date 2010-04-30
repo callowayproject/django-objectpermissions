@@ -51,7 +51,7 @@ class Permission(models.Model):
         result = []
         oct_bits={'0':[0,0,0],'1':[0,0,1],'2':[0,1,0],'3':[0,1,1],
            '4':[1,0,0],'5':[1,0,1],'6':[1,1,0],'7':[1,1,1]}
-        for c in oct(a)[1:]:
+        for c in filter(lambda char: char != 'L', oct(a))[1:]:
                 result += oct_bits[c]
         return result
     
@@ -98,11 +98,11 @@ class Permission(models.Model):
 class UserPermission(Permission):
     user = models.ForeignKey(User)
     
-    def save(self, force_insert=False, force_update=False, using=None):
+    def save(self, *a, **kw):
         """
         Send out a signal indicating that a permission was changed
         """
-        super(Permission, self).save(force_insert, force_update, using)
+        super(Permission, self).save(*a, **kw)
         from signals import permission_changed
         permission_changed.send(sender=self, to_whom=self.user, to_what=self.content_object)
 
@@ -110,11 +110,11 @@ class UserPermission(Permission):
 class GroupPermission(Permission):
     group = models.ForeignKey(Group, null=True)
     
-    def save(self, force_insert=False, force_update=False, using=None):
+    def save(self, *a, **kw):
         """
         Send out a signal indicating that a permission was changed
         """
-        super(Permission, self).save(force_insert, force_update, using)
+        super(Permission, self).save(*a, **kw)
         from signals import permission_changed
         permission_changed.send(sender=self, to_whom=self.group, to_what=self.content_object)
 
