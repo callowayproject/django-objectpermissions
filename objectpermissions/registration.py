@@ -1,4 +1,4 @@
-from django.db.models import FieldDoesNotExist
+from django.db.models import FieldDoesNotExist, Q
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Group
 
@@ -265,15 +265,14 @@ def user_get_objects_with_permission(self, model, permission):
     """
     ctype = ContentType.objects.get_for_model(model)
     perms = model.perms.as_int(permission)
-    obj_ids = list(self.userpermission_set.filter(content_type=ctype).extra(
-                where=['permission | %s > 0',], params=[perms,]
-                ).values_list('object_id', flat=True))
-    for group in self.groups.all():
-        group_ids = list(GroupPermission.objects.filter(content_type=ctype).extra(
-                    where=['permission | %s > 0',], params=[perms,]
-                    ).values_list('object_id', flat=True))
-        obj_ids.extend(group_ids)
-    return model.objects.filter(pk__in=obj_ids)
+    return model.objects.filter(
+        Q(pk__in=self.userpermission_set.filter(content_type=ctype).extra(
+            where=['permission & %s > 0'], params=[perms]
+            ).values_list('object_id', flat=True)) |
+        Q(pk__in=GroupPermission.objects.filter(content_type=ctype).filter(
+            group__in=self.groups.all()).extra(
+            where=['permission & %s > 0'], params=[perms]
+            ).values_list('object_id', flat=True)))
 
 
 def group_get_object_permissions(self, instance, format='int'):
@@ -363,7 +362,7 @@ def group_get_objects_with_permission(self, model, permission):
     ctype = ContentType.objects.get_for_model(model)
     perms = model.perms.as_int(permission)
     obj_ids = self.grouppermission_set.filter(content_type=ctype).extra(
-                where=['permission | %s > 0',], params=[perms,]
+                where=['permission & %s > 0'], params=[perms]
                 ).values_list('object_id', flat=True)
     return model.objects.filter(pk__in=obj_ids)
 

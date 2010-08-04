@@ -159,6 +159,9 @@ class TestRegistration(TestCase):
         g.user_set.add(u)
         objs = u.get_objects_with_perms(FlatPage, fp.perms.Perm1)
         self.assertEquals(fp, objs[0])
+        objs = u.get_objects_with_perms(FlatPage, fp.perms.Perm2)
+        self.assertEquals(len(objs), 0)
+        
     
     def testSignals(self):
         self.create_simpletext()

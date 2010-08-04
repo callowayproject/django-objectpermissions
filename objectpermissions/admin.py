@@ -58,11 +58,21 @@ class GroupPermModelForm(PermissionModelForm):
     class Meta:
         model=GroupPermission
 
+
+def inline_permission_form_factory(model, Form):
+    class InlinePermissionModelForm(Form):
+        perm_list = forms.MultipleChoiceField(choices=model.perms.choice_list())
+    
+    return InlinePermissionModelForm
+
+
 class InlinePermissionModelAdmin(generic.GenericInlineModelAdmin):
     form = PermissionModelForm
+    
     def __init__(self, parent_model, admin_site):
+        self.form = inline_permission_form_factory(parent_model, self.form)
         super(InlinePermissionModelAdmin, self).__init__(parent_model, admin_site)
-        self.form.base_fields['perm_list'].choices = self.parent_model.perms.choice_list()
+
 
 class TabularUserPermInline(InlinePermissionModelAdmin):
     form = UserPermModelForm
