@@ -8,7 +8,10 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.db.models import Model, get_model
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import auto_adapt_to_methods
+try:
+    from django.utils.decorators import auto_adapt_to_methods
+except ImportError:
+    auto_adapt_to_methods = lambda x: x
 from django.utils.http import urlquote
 
 from views import permission_denied
