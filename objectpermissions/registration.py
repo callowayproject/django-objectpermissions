@@ -235,7 +235,10 @@ def user_get_object_permissions(self, instance, format='int'):
             return user_perm.permission|gperm
 
     except UserPermission.DoesNotExist:
-        return 0
+        if format == 'int':
+            return 0
+        else:
+            return []
 
 
 def user_get_object_permissions_as_string_list(self, instance):
@@ -287,7 +290,10 @@ def group_get_object_permissions(self, instance, format='int'):
         else:
             return group_perm.permission
     except GroupPermission.DoesNotExist:
-        return 0
+        if format == 'int':
+            return 0
+        else:
+            return []
 
 
 def group_get_object_permissions_as_string_list(self, instance):
