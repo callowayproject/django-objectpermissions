@@ -122,6 +122,8 @@ class TestRegistration(TestCase):
         g.revoke_all_object_perm(fp)
         self.assertEquals(u.get_object_perm(fp), 0)
         self.assertEquals(g.get_object_perm(fp), 0)
+        self.assertEquals(u.get_object_perm_as_str_list(fp), [])
+        self.assertEquals(g.get_object_perm_as_str_list(fp), [])
         
         u.grant_object_perm(fp, fp.perms.Perm1 + fp.perms.Perm4)
         self.assertEquals(u.get_object_perm(fp), 9)
