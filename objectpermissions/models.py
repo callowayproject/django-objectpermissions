@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+
 
 class UnknownPermission(Exception):
     """
@@ -26,9 +27,9 @@ class Permission(models.Model):
     A privilege granted to a specific User or Group to a specific object.
     """
     permission = models.IntegerField(null=True, blank=True, default=0)
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.DO_NOTHING)
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey('content_type', 'object_id')
     
     class Meta:
         abstract = True
@@ -96,19 +97,19 @@ class Permission(models.Model):
     perm_list = property(_get_perm_as_list, _set_perm_with_list, doc="The permissions as an integer list")
 
 class UserPermission(Permission):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     
     def save(self, *a, **kw):
         """
         Send out a signal indicating that a permission was changed
         """
         super(Permission, self).save(*a, **kw)
-        from signals import permission_changed
+        from .signals import permission_changed
         permission_changed.send(sender=self, to_whom=self.user, to_what=self.content_object)
 
 
 class GroupPermission(Permission):
-    group = models.ForeignKey(Group, null=True)
+    group = models.ForeignKey(Group, null=True, on_delete=models.DO_NOTHING)
     
     def save(self, *a, **kw):
         """
@@ -172,7 +173,7 @@ class ModelPermissions(object):
         """
         if isinstance(perm, int):
             valid_perm = perm
-        elif isinstance(perm, basestring):
+        elif isinstance(perm, str):
             # Look up the attribute, it will raise an error if it doesn't exist
             valid_perm = getattr(self, perm)
         elif isinstance(perm, (list, tuple)):
@@ -226,7 +227,7 @@ class ModelPermissions(object):
         return self.items()
 
 
-class UserPermissionRelation(generic.GenericRelation):
+class UserPermissionRelation(GenericRelation):
     """A generic relation for Object Permissions"""
     
     def __init__(self,**kwargs):
@@ -234,7 +235,7 @@ class UserPermissionRelation(generic.GenericRelation):
         super(UserPermissionRelation, self).__init__(UserPermission, **kwargs)
 
 
-class GroupPermissionRelation(generic.GenericRelation):
+class GroupPermissionRelation(GenericRelation):
     """A generic relation for Object Permissions"""
     
     def __init__(self,**kwargs):
