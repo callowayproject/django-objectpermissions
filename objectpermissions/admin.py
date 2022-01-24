@@ -1,9 +1,10 @@
+from django.forms import forms, ModelForm
+from .models import Permission, UserPermission, GroupPermission
 from django import forms
-from django.contrib.contenttypes import generic
+from django.forms.utils import ErrorList
+from django.contrib.contenttypes.admin import GenericInlineModelAdmin
 
-from models import Permission, UserPermission, GroupPermission
-
-class PermissionModelForm(forms.ModelForm):
+class PermissionModelForm(ModelForm):
     """
     A model form that represents the permissions as a multiple choice field.
     """
@@ -14,7 +15,7 @@ class PermissionModelForm(forms.ModelForm):
         exclude=['permission',]
     
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
-                 initial=None, error_class=forms.util.ErrorList, label_suffix=':',
+                 initial=None, error_class=ErrorList, label_suffix=':',
                  empty_permitted=False, instance=None):
         """
         We have to set the value for ``perm_list`` since it isn't a real field.
@@ -50,6 +51,7 @@ class UserPermModelForm(PermissionModelForm):
     """
     class Meta:
         model=UserPermission
+        fields='__all__'
 
 class GroupPermModelForm(PermissionModelForm):
     """
@@ -57,7 +59,7 @@ class GroupPermModelForm(PermissionModelForm):
     """
     class Meta:
         model=GroupPermission
-
+        fields = '__all__'
 
 def inline_permission_form_factory(model, Form):
     class InlinePermissionModelForm(Form):
@@ -66,7 +68,7 @@ def inline_permission_form_factory(model, Form):
     return InlinePermissionModelForm
 
 
-class InlinePermissionModelAdmin(generic.GenericInlineModelAdmin):
+class InlinePermissionModelAdmin(GenericInlineModelAdmin):
     form = PermissionModelForm
     
     def __init__(self, parent_model, admin_site):

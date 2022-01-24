@@ -1,8 +1,9 @@
-from django.db.models import FieldDoesNotExist, Q
+from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import FieldDoesNotExist
+from .models import UserPermission, GroupPermission, ModelPermissions, UserPermissionRelation, GroupPermissionRelation
 
-from models import UserPermission, GroupPermission, ModelPermissions, UserPermissionRelation, GroupPermissionRelation
 
 class AlreadyRegistered(Exception):
     """
